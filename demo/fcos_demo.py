@@ -5,25 +5,28 @@ import cv2, os
 from fcos_core.config import cfg
 from predictor import COCODemo
 
-import time
+import time, re
 
 
 def main():
     parser = argparse.ArgumentParser(description="PyTorch Object Detection Webcam Demo")
     parser.add_argument(
         "--config-file",
-        default="configs/fcos/fcos_imprv_R_50_FPN_1x.yaml",
+        #default="configs/fcos/fcos_imprv_R_50_FPN_1x.yaml",
+        default="configs/fcos/fcos_imprv_dcnv2_X_101_64x4d_FPN_2x.yaml",
         metavar="FILE",
         help="path to config file",
     )
     parser.add_argument(
         "--weights",
-        default="FCOS_imprv_R_50_FPN_1x.pth",
+        #default="FCOS_imprv_R_50_FPN_1x.pth",
+        default="models/FCOS_imprv_dcnv2_X_101_64x4d_FPN_2x.pth",
         metavar="FILE",
         help="path to the trained model",
     )
     parser.add_argument(
         "--images-dir",
+        #default="demo/images",
         default="demo/images",
         metavar="DIR",
         help="path to demo images directory",
@@ -83,6 +86,12 @@ def main():
         0.5109297037124634, 0.4685552418231964, 0.5148998498916626,
         0.4224434792995453, 0.4998510777950287
     ]
+    # person, bench, chair, dining table
+    # 1     , 14   , 57   , 61
+    thresholds_for_classes[1] = 0.3
+    thresholds_for_classes[14] = 0.3
+    thresholds_for_classes[57] = 0.3
+    thresholds_for_classes[61] = 0.3
 
     demo_im_names = os.listdir(args.images_dir)
 
@@ -98,12 +107,15 @@ def main():
         if img is None:
             continue
         start_time = time.time()
+        # ---predict
         composite = coco_demo.run_on_opencv_image(img)
+
         print("{}\tinference time: {:.2f}s".format(im_name, time.time() - start_time))
-        cv2.imshow(im_name, composite)
-    print("Press any keys to exit ...")
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+        save_dir = re.sub("images", "images_predict", args.images_dir)
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
+        cv2.imwrite(os.path.join(save_dir, im_name), composite)
+
 
 if __name__ == "__main__":
     main()

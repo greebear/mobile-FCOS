@@ -266,12 +266,14 @@ class COCODemo(object):
 
         colors = self.compute_colors_for_labels(labels).tolist()
 
-        for box, color in zip(boxes, colors):
-            box = box.to(torch.int64)
-            top_left, bottom_right = box[:2].tolist(), box[2:].tolist()
-            image = cv2.rectangle(
-                image, tuple(top_left), tuple(bottom_right), tuple(color), 2
-            )
+        for box, color, label in zip(boxes, colors, labels):
+            # if label == 1 or label == 14 or label == 57 or label == 61 or label == 26:
+            if label == 1 or label == 14 or label == 57 or label == 61:
+                box = box.to(torch.int64)
+                top_left, bottom_right = box[:2].tolist(), box[2:].tolist()
+                image = cv2.rectangle(
+                    image, tuple(top_left), tuple(bottom_right), tuple(color), 2
+                )
 
         return image
 
@@ -363,11 +365,15 @@ class COCODemo(object):
 
         template = "{}: {:.2f}"
         for box, score, label in zip(boxes, scores, labels):
-            x, y = box[:2]
-            s = template.format(label, score)
-            cv2.putText(
-                image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
-            )
+            if label == "person" or label == "bench" or label == "chair" or label == "dining table":
+                import re
+                label = re.sub("bench", "chair", label)
+                label = re.sub("dining table", "table", label)
+                x, y = box[:2]
+                s = template.format(label, score)
+                cv2.putText(
+                    image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
+                )
 
         return image
 
